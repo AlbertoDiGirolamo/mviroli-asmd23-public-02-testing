@@ -9,56 +9,71 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 
+import java.util.stream.IntStream;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ReorganiseTest {
     private Device device;
-    @Mock private FailingPolicy stubFailingPolicy = mock(FailingPolicy.class);
-    @Spy private FailingPolicy spyFailingPolicy = spy(FailingPolicy.class);
-    @Mock @Spy private FailingPolicy failingPolicy = spy(mock(FailingPolicy.class));
+    @Mock private FailingPolicy failingPolicy = mock(FailingPolicy.class);
+
+    @BeforeEach
+    void init() {
+        device = new StandardDevice(failingPolicy);
+    }
 
     @Test
     void testCreateDevice(){
-        this.device = new StandardDevice(stubFailingPolicy);
         assertNotNull(this.device);
     }
 
     @Test
     void testInitiallyOff(){
-        this.device = new StandardDevice(spyFailingPolicy);
         assertFalse(device.isOn());
-        verifyNoInteractions(this.spyFailingPolicy);
+        verifyNoInteractions(this.failingPolicy);
     }
 
     @Test
     void testCanBeSwitchedOn(){
-        this.stubFailingPolicy = mock(FailingPolicy.class);
-        device = new StandardDevice(this.stubFailingPolicy);
-        when(this.stubFailingPolicy.attemptOn()).thenReturn(true);
+        when(this.failingPolicy.attemptOn()).thenReturn(true);
         device.on();
         assertTrue(device.isOn());
+        verify(this.failingPolicy).attemptOn();
     }
 
     @Test
+    void testCantBeSwitchedOn() {
+        when(this.failingPolicy.attemptOn()).thenReturn(false);
+        assertThrows(IllegalStateException.class, () -> device.on());
+        verify(this.failingPolicy).attemptOn();
+    }
+    @Test
     void testCanBeSwitchedOff(){
-        this.stubFailingPolicy = mock(FailingPolicy.class);
-        device = new StandardDevice(this.stubFailingPolicy);
-        when(this.stubFailingPolicy.attemptOn()).thenReturn(true);
+        when(this.failingPolicy.attemptOn()).thenReturn(true);
         device.on();
+        assertTrue(device.isOn());
         device.off();
         assertFalse(device.isOn());
     }
 
     @Test
-    void testReset(){
-        device = new StandardDevice(this.failingPolicy);
+    void testReset() {
         when(this.failingPolicy.attemptOn()).thenReturn(true);
         device.on();
         device.reset();
-        assertEquals(2,
-                Mockito.mockingDetails(this.failingPolicy).getInvocations().size());
-
+        assertEquals(2, Mockito.mockingDetails(this.failingPolicy).getInvocations().size());
+    }
+    @Test
+    void testSwitchesOnAndOff() {
+        when(this.failingPolicy.attemptOn()).thenReturn(true, true, false);
+        IntStream.range(0, 2).forEach(i -> {
+            device.on();
+            assertTrue(device.isOn());
+            device.off();
+            assertFalse(device.isOn());
+        });
+        assertThrows(IllegalStateException.class, () -> device.on());
     }
 
 }
