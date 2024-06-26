@@ -13,8 +13,8 @@ In this task, we extended a small app with a GUI, implementing a logging feature
 
 The GUI application, available in the folder **oopGUIExam**, allows users to interact with a grid of cells following specific rules:
 
-1. Click on a cell to incrementally number it.
-2. Select non-adjacent cells; on selecting an adjacent cell, all numbered cells move top-right.
+1. Click on a non-adjacent cell to incrementally number it.
+2. On selecting an adjacent cell, all numbered cells move top-right.
 3. Continue clicking to move all numbered cells further top-right.
 4. The application closes if a click causes a numbered cell to exit the grid.
 
